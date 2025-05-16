@@ -32,7 +32,7 @@ service_tier,
 operation_type,
 resource_type,
 currency,
-sum(credit_usage)*-1 as credit_usage,
+sum(credit_usage) as credit_usage,
 sum(case when success = true then 1 else 0 end) as successful_operations,
 sum(case when success = false then 1 else 0 end) as failed_operations
 from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact` 
@@ -55,7 +55,7 @@ service_tier,
 operation_type,
 resource_type,
 currency,
-sum(credit_usage)*-1 as credit_usage,
+sum(credit_usage) as credit_usage,
 sum(case when success = true then 1 else 0 end) as successful_operations,
 sum(case when success = false then 1 else 0 end) as failed_operations
 from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact` 

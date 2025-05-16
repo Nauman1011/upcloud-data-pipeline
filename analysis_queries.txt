@@ -1,0 +1,78 @@
+-- Queries to be used
+
+
+-- Top N Non Free Tier users by utilization
+select user_id,sum(credit_usage) from 
+`dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+where success = True and service_tier <> 'free'
+group by user_id
+order by sum(credit_usage) desc limit 5;
+
+-- Users who moved from Free Tier to Paid Tiers in April
+with free_tier_users as
+(
+  select m.* from
+  (select user_id,billing_timestamp,service_tier,row_number() over (partition by user_id order by billing_timestamp asc) as row_num 
+  from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`)m where m.row_num = 1 and service_tier = 'free'
+),
+latest_service_tier as
+(
+  select m.* from
+  (select user_id,billing_timestamp,service_tier,row_number() over (partition by user_id order by billing_timestamp desc) as row_num 
+  from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`)m where m.row_num = 1
+),
+joined_data as
+(select lst.* from free_tier_users fts
+inner join latest_service_tier lst
+on fts.user_id = lst.user_id)
+select service_tier,count(*)
+from joined_data
+group by service_tier;
+
+--service tier wise credit utilization
+select service_tier,sum(credit_usage) as credits_usage
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+where service_tier <> 'free'
+group by service_tier
+order by sum(credit_usage) asc;
+
+--Free vs Non Free Tier operation_type Credits Usage
+select 
+case when service_tier = 'free' then 'free' else 'Paid Tier' end as Service_Tier,sum(credit_usage) as credits_usage
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+group by service_tier
+order by sum(credit_usage) asc;
+
+-- Hourly credit utilization stats for the month of April
+SELECT 
+  CASE 
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 0 AND 5 THEN 'Night'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 6 AND 11 THEN 'Morning'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 12 AND 17 THEN 'Afternoon'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 18 AND 23 THEN 'Evening'
+  END AS hour_of_day,
+  SUM(credit_usage) AS credit 
+FROM `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+GROUP BY hour_of_day
+ORDER BY credit ASC;
+
+-- Hourly User Engagement stats for the month of April
+SELECT 
+  CASE 
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 0 AND 5 THEN 'Night'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 6 AND 11 THEN 'Morning'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 12 AND 17 THEN 'Afternoon'
+    WHEN EXTRACT(HOUR FROM billing_timestamp) BETWEEN 18 AND 23 THEN 'Evening'
+  END AS hour_of_day,
+  count(user_id) AS users 
+FROM `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+GROUP BY hour_of_day
+ORDER BY users ASC;
+
+-- Credit Utilization and User Engagement stats for the month of April for failed transactions
+select resource_type,sum(credit_usage) as credits_usage,
+count(user_id) as no_of_users
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact`
+where success = false
+group by resource_type
+order by sum(credit_usage) asc;

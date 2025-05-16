@@ -1,0 +1,69 @@
+--aggregates
+
+--daily
+select 
+billing_date,
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency,
+sum(credit_usage) as credit_usage,
+sum(case when success = true then 1 else 0 end) as successful_operations,
+sum(case when success = false then 1 else 0 end) as failed_operations
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact` 
+where user_id = '19987'
+group by billing_date,
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency;
+
+--monthly
+select 
+EXTRACT(YEAR FROM billing_date) AS year,
+EXTRACT(MONTH FROM billing_date) AS month,
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency,
+sum(credit_usage)*-1 as credit_usage,
+sum(case when success = true then 1 else 0 end) as successful_operations,
+sum(case when success = false then 1 else 0 end) as failed_operations
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact` 
+group by 
+EXTRACT(YEAR FROM billing_date),
+EXTRACT(MONTH FROM billing_date),
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency;
+
+--yearly
+select 
+EXTRACT(YEAR FROM billing_date) AS year,
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency,
+sum(credit_usage)*-1 as credit_usage,
+sum(case when success = true then 1 else 0 end) as successful_operations,
+sum(case when success = false then 1 else 0 end) as failed_operations
+from `dbt-test-450313`.`dbt_nhayat`.`billing_data_fact` 
+group by 
+EXTRACT(YEAR FROM billing_date),
+user_id,
+region,
+service_tier,
+operation_type,
+resource_type,
+currency;

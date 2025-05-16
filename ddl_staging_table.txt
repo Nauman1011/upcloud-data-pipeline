@@ -1,0 +1,21 @@
+"CREATE TABLE `dbt-test-450313.dbt_nhayat.billing_data_staging`
+(
+  timestamp STRING,
+  resource_id STRING,
+  user_id STRING,
+  credit_usage STRING,
+  region STRING,
+  service_tier STRING,
+  operation_type STRING,
+  success STRING,
+  resource_type STRING,
+  invoice_id STRING,
+  currency STRING,
+  year STRING,
+  month STRING,
+  day STRING,
+  billing_date STRING,
+  data_loaded STRING,
+  refresh_timestamp STRING
+)
+CLUSTER BY user_id, resource_id, invoice_id;"
